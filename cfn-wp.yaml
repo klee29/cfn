@@ -83,16 +83,16 @@ Resources:
       ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX] # Dynamic mapping + Pseudo Parameter
       InstanceType: !FindInMap [InstanceSize, !Ref EnvironmentSize, EC2]
       KeyName: AdvancedCFN
-      UserData:
+      UserData: # Userdata 
         "Fn::Base64":
           !Sub |
             #!/bin/bash
             yum update -y aws-cfn-bootstrap # good practice - always do this.
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2 --configsets wordpress --region ${AWS::Region}
             yum -y update
-    Metadata:
-      AWS::CloudFormation::Init:
-        configSets:
+    Metadata: # Init vs. Userdata? Init can be used updatable feature than userdata, Init: Inplace, Userdata: Replace
+      AWS::CloudFormation::Init: # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html
+        configSets: # can use ascending or descending order ways 
           wordpress:
             - "configure_cfn"
             - "install_wordpress"
