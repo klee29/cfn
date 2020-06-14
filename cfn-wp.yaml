@@ -87,9 +87,13 @@ Resources:
         "Fn::Base64":
           !Sub |
             #!/bin/bash
-            yum update -y aws-cfn-bootstrap # good practice - always do this.
+            yum update -y aws-cfn-bootstrap 
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2 --configsets wordpress --region ${AWS::Region}
             yum -y update
+    CreationPolicy:
+      ResourceSignal:
+        Count: "1" # in minutes, if cfn signal couldn't get any signal during 1 min, it consider failure.
+        Timeout: PT15M
     Metadata: # Init vs. Userdata? Init can be used updatable feature than userdata, Init: Inplace, Userdata: Replace
       AWS::CloudFormation::Init: # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html
         configSets: # can use ascending or descending order ways 
@@ -97,7 +101,7 @@ Resources:
             - "configure_cfn"
             - "install_wordpress"
             - "config_wordpress"
-        configure_cfn:
+        configure_cfn: # config key
           files:
             /etc/cfn/hooks.d/cfn-auto-reloader.conf:
               content: !Sub |
@@ -118,19 +122,19 @@ Resources:
               mode: "000400"
               owner: root
               group: root
-            /var/www/html/index2.html:
+            /var/www/html/index2.html: # create file as teststring parameter
               content: !Ref TestString
           services:
-            sysvinit:
+            sysvinit: # If any file in cfn-hup, it will be updated. 
               cfn-hup:
                 enabled: "true"
                 ensureRunning: "true"
                 files:
                   - "/etc/cfn/cfn-hup.conf"
                   - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
-        install_wordpress:
+        install_wordpress: # config key
           packages:
-            yum:
+            yum: # latest version, just let it as "[]" 
               httpd: []
               php: []
               mysql: []
@@ -138,11 +142,11 @@ Resources:
           sources:
             /var/www/html: "http://wordpress.org/latest.tar.gz"
           services:
-            sysvinit:
+            sysvinit: 
               httpd:
                 enabled: "true"
                 ensureRunning: "true"
-        config_wordpress:
+        config_wordpress: # config key
           commands:
             01_clone_config:
               cwd: "/var/www/html/wordpress"
