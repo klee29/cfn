@@ -69,6 +69,7 @@ Mappings:
 Resources:
   DB:
     Type: "AWS::RDS::DBInstance"
+    DeletionPolicy: Snapshot
     Properties:
       AllocatedStorage: 5
       StorageType: gp2
@@ -79,6 +80,7 @@ Resources:
       MasterUserPassword: !Ref DatabasePassword
   EC2:
     Type: "AWS::EC2::Instance"
+    DeletionPolicy: Delete
     Properties:
       ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX] # Dynamic mapping + Pseudo Parameter
       InstanceType: !FindInMap [InstanceSize, !Ref EnvironmentSize, EC2]
@@ -90,6 +92,7 @@ Resources:
             yum update -y aws-cfn-bootstrap 
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2 --configsets wordpress --region ${AWS::Region}
             yum -y update
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2 --region ${AWS::Region}
     CreationPolicy:
       ResourceSignal:
         Count: "1" # in minutes, if cfn signal couldn't get any signal during 1 min, it consider failure.
@@ -170,3 +173,4 @@ Resources:
                 sed -i 's/password_here/${DatabasePassword}/g' wp-config.php
   S3:
     Type: "AWS::S3::Bucket"
+    DeletionPolicy: Retain # Delete, Snapshot, or Retain 
