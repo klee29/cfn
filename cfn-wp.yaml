@@ -1,8 +1,8 @@
 Parameters:
-  SnapToRestore: # cfn prject 1-6 added
+  SnapToRestore:
     Type: String
     Default: ""
-    Description: Snap id to restore
+    Description: snap id to restore
   EnvironmentSize:
     Type: String
     Default: SMALL
@@ -21,14 +21,14 @@ Parameters:
     Type: String
     Default: w0rdpr355
     NoEcho: true
-Conditions: # cfn project 1-6 added conditional block
+Conditions:
   isLarge:
     !Equals [!Ref EnvironmentSize, "LARGE"]
   isntLarge:
-    !Not [!Equals [!Ref EnvironmentSize, "LARGE"]] 
+    !Not [!Equals [!Ref EnvironmentSize, "LARGE"]]
   isRestore:
     !Not [!Equals [!Ref SnapToRestore, ""]]
-Mappings: #Key/value pair 
+Mappings:
   RegionMap:
     us-east-1:
       AMALINUX: ami-0080e4c5bc078760e
@@ -72,23 +72,23 @@ Mappings: #Key/value pair
       "DB" : "db.t2.small"
     LARGE:
       "EC2" : "t2.medium"
-      "DB" : "db.t2.medium"
-
+      "DB" : "db.r3.xlarge"
 Resources:
   DB:
     Type: "AWS::RDS::DBInstance"
-    Condition: isntLarge # Only create the MySQL DB if its small/med
+    Condition: isntLarge # added - only create the MySQL DB if its small/med
     DeletionPolicy: Snapshot
     Properties:
       AllocatedStorage: 5
       StorageType: gp2
       DBInstanceClass: !FindInMap [InstanceSize, !Ref EnvironmentSize, DB] # Dynamic mapping + Pseudo Parameter
-      DBName: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabaseName] # cfn project 1-6-b, if isRstore is false -> !Ref DatabaseUser 
+      DBName: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabaseName]
       Engine: MySQL
+      StorageType: gp2
       MasterUsername: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabaseUser]
       MasterUserPassword: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabasePassword]
       DBSnapshotIdentifier: !If [isRestore, !Ref SnapToRestore, !Ref "AWS::NoValue"]
-  DBAuroraCluster: # cfn project 1-6-c added Aurura DB
+  DBAuroraCluster:
     Type: "AWS::RDS::DBCluster"
     DeletionPolicy: Snapshot
     Condition: isLarge # only create if its a large EnvironmentSize
@@ -112,26 +112,26 @@ Resources:
       ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMALINUX] # Dynamic mapping + Pseudo Parameter
       InstanceType: !FindInMap [InstanceSize, !Ref EnvironmentSize, EC2]
       KeyName: AdvancedCFN
-      UserData: # Userdata 
+      UserData:
         "Fn::Base64":
           !Sub |
             #!/bin/bash
-            yum update -y aws-cfn-bootstrap 
+            yum update -y aws-cfn-bootstrap # good practice - always do this.
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2 --configsets wordpress --region ${AWS::Region}
             yum -y update
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2 --region ${AWS::Region}
     CreationPolicy:
       ResourceSignal:
-        Count: "1" # in minutes, if cfn signal couldn't get any signal during 1 min, it consider failure.
+        Count: "1"
         Timeout: PT15M
-    Metadata: # Init vs. Userdata? Init can be used updatable feature than userdata, Init: Inplace, Userdata: Replace
-      AWS::CloudFormation::Init: # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html
-        configSets: # can use ascending or descending order ways 
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
           wordpress:
             - "configure_cfn"
             - "install_wordpress"
             - "config_wordpress"
-        configure_cfn: # config key
+        configure_cfn:
           files:
             /etc/cfn/hooks.d/cfn-auto-reloader.conf:
               content: !Sub |
@@ -152,19 +152,19 @@ Resources:
               mode: "000400"
               owner: root
               group: root
-            /var/www/html/index2.html: # create file as teststring parameter
-              content: !Ref TestString
+            /var/www/html/index2.html:
+              content: "test9"
           services:
-            sysvinit: # If any file in cfn-hup, it will be updated. 
+            sysvinit:
               cfn-hup:
                 enabled: "true"
                 ensureRunning: "true"
                 files:
                   - "/etc/cfn/cfn-hup.conf"
                   - "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
-        install_wordpress: # config key
+        install_wordpress:
           packages:
-            yum: # latest version, just let it as "[]" 
+            yum:
               httpd: []
               php: []
               mysql: []
@@ -172,11 +172,11 @@ Resources:
           sources:
             /var/www/html: "http://wordpress.org/latest.tar.gz"
           services:
-            sysvinit: 
+            sysvinit:
               httpd:
                 enabled: "true"
                 ensureRunning: "true"
-        config_wordpress: # config key
+        config_wordpress:
           commands:
             01_clone_config:
               cwd: "/var/www/html/wordpress"
@@ -184,7 +184,7 @@ Resources:
               command: "cp wp-config-sample.php wp-config.php"
             02_inject_dbhost:
               cwd: "/var/www/html/wordpress"
-              command: !If # cfn project 1-6-c added aurora conditional function
+              command: !If
                 - isntLarge
                 - !Sub |
                   sed -i 's/localhost/${DB.Endpoint.Address}/g' wp-config.php
@@ -223,4 +223,11 @@ Resources:
                 myip=`cat ip.address` && echo "update_option('home','http://${!myip}/wordpress');" >> /var/www/html/wordpress/wp-content/themes/twentyseventeen/functions.php
   S3:
     Type: "AWS::S3::Bucket"
-    DeletionPolicy: Retain # Delete, Snapshot, or Retain / Default value is 'Delete'. 
+    #DeletionPolicy: Retain
+Outputs:
+  wproot:
+    Description: Access URL for wordpress
+    Value: !Join ["", ["http://", !GetAtt EC2.PublicIp, "/wordpress"]] # Join function
+  wpadmin:
+    Description: Admin Login URL - if restoring from snap, always go to this URL first
+    Value: !Join ["", ["http://", !GetAtt EC2.PublicIp, "/wordpress/wp-login.php"]]
