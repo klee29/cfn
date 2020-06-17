@@ -20,7 +20,7 @@ Parameters:
   TestString:
     Type: String
     Default: test9
-Mappings:
+Mappings: #Key/value pair 
   RegionMap:
     us-east-1:
       AMALINUX: ami-0080e4c5bc078760e
@@ -173,4 +173,4 @@ Resources:
                 sed -i 's/password_here/${DatabasePassword}/g' wp-config.php
   S3:
     Type: "AWS::S3::Bucket"
-    DeletionPolicy: Retain # Delete, Snapshot, or Retain 
+    DeletionPolicy: Retain # Delete, Snapshot, or Retain / Default value is 'Delete'. 
