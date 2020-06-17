@@ -1,4 +1,8 @@
 Parameters:
+  SnapToRestore: # cfn prject 1-6 added
+    Type: String
+    Default: ""
+    Description: Snap id to restore
   EnvironmentSize:
     Type: String
     Default: SMALL
@@ -17,9 +21,13 @@ Parameters:
     Type: String
     Default: w0rdpr355
     NoEcho: true
-  TestString:
-    Type: String
-    Default: test9
+Conditions: # cfn project 1-6 added conditional block
+  isLarge:
+    !Equals [!Ref EnvironmentSize, "LARGE"]
+  isntLarge:
+    !Not [!Equals [!Ref EnvironmentSize, "LARGE"]] 
+  isRestore:
+    !Not [!Equals [!Ref SnapToRestore, ""]]
 Mappings: #Key/value pair 
   RegionMap:
     us-east-1:
@@ -74,10 +82,11 @@ Resources:
       AllocatedStorage: 5
       StorageType: gp2
       DBInstanceClass: !FindInMap [InstanceSize, !Ref EnvironmentSize, DB] # Dynamic mapping + Pseudo Parameter
-      DBName: !Ref DatabaseName
+      DBName: !If [isRestore, !Ref "AWS::NoValue", !Ref DatabaseName] # cfn project 1-6-b, if isRstore is false -> !Ref DatabaseUser 
       Engine: MySQL
       MasterUsername: !Ref DatabaseUser
       MasterUserPassword: !Ref DatabasePassword
+      DBSnapshotIdentifier: !Ref SnapToRestore
   EC2:
     Type: "AWS::EC2::Instance"
     DeletionPolicy: Delete
