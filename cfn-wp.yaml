@@ -6,7 +6,7 @@ Parameters:
   EnvironmentSize:
     Type: String
     Default: SMALL
-    AllowedValues:
+    AllowedValues: # Parameter Constraints
       - SMALL
       - MEDIUM
       - LARGE
@@ -14,13 +14,22 @@ Parameters:
   DatabaseName:
     Type: String
     Default: wordpress
+    MinLength: 1
+    MaxLength: 64
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*" # start with a letter, only alphanumeric characters - new for this lesson
   DatabaseUser:
     Type: String
     Default: wordpress
+    MinLength: 1
+    MaxLength: 16
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9]*" # start with a letter, only alphanumeric characters - new for this lesson
   DatabasePassword:
     Type: String
     Default: w0rdpr355
-    NoEcho: true
+    MinLength: 8
+    MaxLength: 41
+    NoEcho: true # Security Measure 
+    AllowedPattern: "[a-zA-Z0-9]*" # Must only contain alphanumeric characters - new for this lesson
 Conditions:
   isLarge:
     !Equals [!Ref EnvironmentSize, "LARGE"]
