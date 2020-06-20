@@ -10,8 +10,8 @@ Especially, this project works with external gederate identity (with Google Auth
   5. Create Stack, which gets proper permission from AWS-IAM
   6. Send a notification to customer about created a stack 
   7. Customer get credential from External Federate Identification (Google Auth); [Google API Manager](https://console.developers.google.com/projectselector2/apis/dashboard?pli=1&supportedpurview=project);, OAuth Client Id in Credential section, put 'selfservicebucket(S3 from AWS)' URL at OAuth client. 
-  --> Send it to AWS-Congnito
-  8. With STS-Token(which is temporary credential) from Cognito, customer interacts with Stack 
+  8. With STS-Token(which is temporary credential) from Cognito, customer interacts with Stack; Create new Identity Pool with Google+ auth. provider (adds google credential what we created at step 7), Coginto assumes iam role with this temporary credential, add auth role what we created stacks before.
   
 
+This project works with 'CloudFormation Advanced course' from a cloud guru.
 
