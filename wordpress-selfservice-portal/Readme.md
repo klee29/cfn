@@ -1,8 +1,8 @@
 This project is part of cloudformation with practical example which is wordpress website. 
 Especially, this project works with external gederate identity (with Google Auth) concept. 
 
-1) There are two portion customer, and service provider(business)
-2) This is worked through about that how this project is working on below:
+- There are two portion customer, and service provider(business)
+- This is worked through about that how this project is working on below:
   1. Client sent a 'order now' request --> Backend order processing
   2. Backend order processing --> Support (or hosting) team 
   3. Support team get resource from 'Portal bucket'(S3).
