@@ -20,7 +20,7 @@ Resources:
         PolicyDocument:
           Statement:
             -
-              Sid: "ABC123"
+              Sid: "user123" 
               Action:
                 - "s3:GetObject"
               Effect: Allow
@@ -35,7 +35,7 @@ Resources:
         PolicyDocument:
           Statement:
             -
-              Sid: "ABC123"
+              Sid: "user123"
               Action:
                 - "s3:GetObject"
               Effect: Allow
