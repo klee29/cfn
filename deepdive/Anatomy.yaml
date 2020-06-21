@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   This template creates an EC2 instance based on the region and selection of an
   AMI ID. It also will create a Security Group.
-Parameters: # we can make this by default value
+Parameters: # we can make this by default value or can specify more parameter options.
   MySubnet:
     Description: My subnet from my VPC
     Type: String
